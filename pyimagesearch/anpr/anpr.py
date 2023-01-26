@@ -1,4 +1,6 @@
 # import the necessary packages
+import re
+
 from skimage.segmentation import clear_border
 import pytesseract
 import easyocr
@@ -93,7 +95,7 @@ class PyImageSearchANPR:
             ar = w / float(h)
 
             # check to see if the aspect ratio is rectangular
-            if ar >= self.minAR and ar <= self.maxAR:
+            if self.minAR <= ar <= self.maxAR:
                 # store the license plate contour and extract the
                 # license plate from the grayscale image and then
                 # threshold it
@@ -114,7 +116,7 @@ class PyImageSearchANPR:
                 break
         # return a 2-tuple of the license plate ROI and the contour
         # associated with it
-        return (roi, lpCnt)
+        return roi, lpCnt
 
     def build_tesseract_options(self, psm=7):
         # tell Tesseract to only OCR alphanumeric characters
@@ -141,6 +143,33 @@ class PyImageSearchANPR:
             # OCR the license plate
             options = self.build_tesseract_options(psm=psm)
             lpText = pytesseract.image_to_string(lp, config=options)
+
+            # # fun ----------------
+            # def str_opr(s):
+            #     s = s.upper()
+            #     s = re.sub('[^a-zA-Z0-9]+', '', s)
+            #     s = s.replace("IND", "", 1)
+            #     s = s.replace("INC", "", 1)
+            #     s = s.replace("IN", "", 1)
+            #     s = s.replace("ND", "", 1)
+            #     return s
+            # # --------------------
+            #
+            # lpText = list(str_opr(lpText))
+            #
+            # # fun ----------------
+            # def is_not_digit(i: int):
+            #     return not lpText[i].isdigit()
+            #
+            # def is_digit(i: int):
+            #     return lpText[i].isdigit()
+            #
+            # def check(check: str, change: str, i: int):
+            #     if lpText[i] == check:
+            #         lpText[i] = change
+            #         print(check, change)
+            # # --------------------
+
             # # ocr
             # reader = easyocr.Reader(['en'])  # this needs to run only once to load the model into memory
             # lpText = reader.readtext(lp)
@@ -149,7 +178,4 @@ class PyImageSearchANPR:
             self.debug_imshow("License Plate", lp)
         # return a 2-tuple of the OCR'd license plate text along with
         # the contour associated with the license plate region
-        return (lpText, lpCnt)
-
-
-
+        return lpText, lpCnt
